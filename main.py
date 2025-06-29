@@ -1,6 +1,12 @@
 # main.py - The core of the Dieter Rams-inspired Internet Radio Clock
 
+import inspect
+import os
+
 import mesop as me
+from fastapi import FastAPI
+from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # A dictionary of pre-defined radio stations.
 # Note: These URLs can be unreliable and may change without notice.
@@ -53,17 +59,20 @@ def select_station(e: me.ClickEvent):
     state.is_playing = True  # Auto-play when a new station is selected
     yield
 
+
 def on_custom_station_name_input(e: me.InputEvent):
     """Updates the custom station name in the state."""
     state = me.state(State)
     state.custom_station_name = e.value
     yield
 
+
 def on_custom_station_url_input(e: me.InputEvent):
     """Updates the custom station URL in the state."""
     state = me.state(State)
     state.custom_station_url = e.value
     yield
+
 
 def on_add_custom_station(e: me.ClickEvent):
     """Adds a new custom station to the list."""
@@ -228,3 +237,35 @@ def custom_station_form_style():
         flex_direction="column",
         gap=10,
     )
+
+# Create a FastAPI app.
+app = FastAPI()
+
+# Mount the Mesop static files.
+app.mount(
+    "/static",
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(inspect.getfile(me)), "web", "src", "app", "prod", "web_package"
+        )
+    ),
+    name="static",
+)
+
+# Mount the local project directory to serve the web component JS files.
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.dirname(__file__)),
+    name="local_static",
+)
+
+# Mount the Mesop app.
+app.mount(
+    "/",
+    WSGIMiddleware(me.create_wsgi_app(debug_mode=True)),
+)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=32123, reload=True)

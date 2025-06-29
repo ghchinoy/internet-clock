@@ -11,6 +11,12 @@ This project is a web-based clock and internet radio player with a minimalist de
 
 ## How to Run
 
+There are two ways to run this application:
+
+### 1. Using the Mesop CLI (for development)
+
+This is the simplest way to run the application for development purposes.
+
 1.  **Install Dependencies:** Make sure you have Python and `uv` installed. Then, install the project dependencies:
 
     ```bash
@@ -25,13 +31,35 @@ This project is a web-based clock and internet radio player with a minimalist de
 
 3.  **Open in Browser:** Open your web browser and navigate to the URL provided in the terminal (usually `http://localhost:32123`).
 
+### 2. Using a Standard Python Web Server (for production)
+
+This application is a standard [FastAPI](https://fastapi.tiangolo.com/) application and can be run with any ASGI-compliant server, such as Uvicorn.
+
+1.  **Install Dependencies:** Make sure you have Python and `uv` installed. Then, install the project dependencies:
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+2.  **Run the Application:** Use `uv run` to start the application with the Uvicorn server:
+
+    ```bash
+    uv run main.py
+    ```
+
+3.  **Open in Browser:** Open your web browser and navigate to `http://localhost:32123`.
+
 ## Architecture
 
 This application is built with a combination of Python and JavaScript, leveraging the strengths of each for a robust and interactive experience.
 
+### FastAPI (Python)
+
+The application is a standard FastAPI web server. This allows it to be run with any standard ASGI server and provides a robust foundation for adding new API endpoints or other features.
+
 ### Mesop (Python)
 
-The core application logic, state management, and UI layout are all handled by the Mesop framework in Python (`main.py`). Mesop allows for a declarative, component-based approach to building web UIs entirely in Python.
+The core application logic, state management, and UI layout are all handled by the Mesop framework in Python (`main.py`). Mesop is integrated into the FastAPI server as a WSGI middleware, which allows it to handle the UI rendering and user interactions.
 
 ### Web Components (JavaScript)
 
@@ -47,4 +75,3 @@ This hybrid approach allows us to build a powerful, interactive application whil
 # Disclaimer
 
 This is not an official or supported Google project.
-

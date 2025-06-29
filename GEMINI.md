@@ -4,6 +4,56 @@ Use Mesop, which can be found at https://github.com/mesop-dev/mesop or https://m
 
 ## Mesop
 
+### Application Structure (FastAPI Integration)
+
+For a more robust and scalable application structure, it is recommended to embed your Mesop application within a FastAPI server. This allows you to run the application with a standard ASGI server like Uvicorn (`uv run`) and provides a clear pattern for managing static files and custom API endpoints.
+
+Here is the recommended structure:
+
+```python
+import inspect
+import os
+
+import mesop as me
+from fastapi import FastAPI
+from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.staticfiles import StaticFiles
+
+# Create a FastAPI app.
+app = FastAPI()
+
+# Your Mesop pages, components, and event handlers go here.
+
+# Mount the Mesop static files.
+app.mount(
+    "/static",
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(inspect.getfile(me)), "web", "src", "app", "prod", "web_package"
+        )
+    ),
+    name="static",
+)
+
+# Mount the local project directory to serve web component JS files.
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.dirname(__file__)),
+    name="local_static",
+)
+
+# Mount the Mesop app.
+app.mount(
+    "/",
+    WSGIMiddleware(me.create_wsgi_app(debug_mode=True)),
+)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=32123, reload=True)
+```
+
 ### Code Style
 
 *   **Comments:** Add clear and concise comments to your code to explain the purpose of functions, classes, and complex logic. This is especially important for web components and their interaction with the main Python application.
@@ -47,15 +97,13 @@ Use Mesop, which can be found at https://github.com/mesop-dev/mesop or https://m
 
 *   **Defining a Web Component:** To create a web component, use the `@me.web_component` decorator on a Python function. This function should return a `me.insert_web_component` call.
 
+*   **Web Component Paths:** The `path` argument in the `@me.web_component` decorator should be a relative file system path to the JavaScript file. The FastAPI server will handle serving the file from the correct URL.
+
     ```python
+    # In main.py
     @me.web_component(path="./my_component.js")
-    def my_component(my_property: str):
-      return me.insert_web_component(
-        name="my-component-name",
-        properties={
-          "myProperty": my_property,
-        },
-      )
+    def my_component():
+        ...
     ```
 
 *   **Using a Web Component:** To use a web component in your page, simply call the decorated Python function.
@@ -65,7 +113,7 @@ Use Mesop, which can be found at https://github.com/mesop-dev/mesop or https://m
 
     @me.page(...)
     def my_page():
-      my_component(my_property="hello")
+      my_component()
     ```
 
 *   **Security:** Mesop has a security feature that prevents you from directly setting the `src` property on a web component. If you need to pass a URL to a component, use a different property name (e.g., `stream_url`).
